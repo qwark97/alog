@@ -130,7 +130,7 @@ func (l Logger) prepareMsg(s string, lvl Level, args ...any) *strings.Reader {
 	var fieldsMsg string
 
 	if l.fields != nil {
-		fields, err := json.Marshal(l.fields)
+		fields, err := json.Marshal(normalizeFields(l.fields))
 		if err == nil {
 			fieldsMsg = string(fields)
 		}
@@ -139,6 +139,18 @@ func (l Logger) prepareMsg(s string, lvl Level, args ...any) *strings.Reader {
 	msg += "\n"
 
 	return strings.NewReader(msg)
+}
+
+func normalizeFields(f fields) fields {
+	normalized := make(fields, len(f))
+	for k, v := range f {
+		if err, ok := v.(error); ok {
+			normalized[k] = err.Error()
+			continue
+		}
+		normalized[k] = v
+	}
+	return normalized
 }
 
 func (l Logger) WithField(key string, value any) Logger {
